@@ -53,6 +53,21 @@ on:
         required: false
         type: boolean
         default: false
+      hide_window_decorations:
+        description: "Hide native window decorations (Windows/Linux)"
+        required: false
+        type: boolean
+        default: false
+      force_internal_navigation:
+        description: "Keep all clicked links inside the app"
+        required: false
+        type: boolean
+        default: false
+      liquid_glass:
+        description: "Add Bilibili liquid glass window controls"
+        required: false
+        type: boolean
+        default: false
       new_window:
         description: "Allow sites to open new windows"
         required: false
@@ -93,6 +108,13 @@ jobs:
       - name: Build CLI
         run: pnpm run cli:build
 
+      - name: Build liquid glass injection
+        if: inputs.liquid_glass
+        shell: bash
+        run: |
+          npm ci --prefix injections
+          npm run build --prefix injections
+
       - name: Setup mold linker
         if: runner.os == 'Linux'
         uses: rui314/setup-mold@339e96b4ff1f3bd865856ba4cbbe8818a7acb038 # v1
@@ -112,6 +134,9 @@ jobs:
           INPUT_APP_VERSION: ${{ inputs.app_version }}
           INPUT_FULLSCREEN: ${{ inputs.fullscreen }}
           INPUT_HIDE_TITLE_BAR: ${{ inputs.hide_title_bar }}
+          INPUT_HIDE_WINDOW_DECORATIONS: ${{ inputs.hide_window_decorations }}
+          INPUT_FORCE_INTERNAL_NAVIGATION: ${{ inputs.force_internal_navigation }}
+          INPUT_LIQUID_GLASS: ${{ inputs.liquid_glass }}
           INPUT_NEW_WINDOW: ${{ inputs.new_window }}
           INPUT_MULTI_ARCH: ${{ inputs.multi_arch }}
           INPUT_TARGETS: ${{ inputs.targets }}
@@ -150,6 +175,18 @@ jobs:
             ARGS+=("--hide-title-bar")
           fi
 
+          if [ "$INPUT_HIDE_WINDOW_DECORATIONS" == "true" ]; then
+            ARGS+=("--hide-window-decorations")
+          fi
+
+          if [ "$INPUT_FORCE_INTERNAL_NAVIGATION" == "true" ]; then
+            ARGS+=("--force-internal-navigation")
+          fi
+
+          if [ "$INPUT_LIQUID_GLASS" == "true" ]; then
+            ARGS+=("--inject" "./injections/dist/bilibili-glass.js")
+          fi
+
           if [ "$INPUT_NEW_WINDOW" == "true" ]; then
             ARGS+=("--new-window")
           fi
@@ -182,6 +219,9 @@ jobs:
           INPUT_APP_VERSION: ${{ inputs.app_version }}
           INPUT_FULLSCREEN: ${{ inputs.fullscreen }}
           INPUT_HIDE_TITLE_BAR: ${{ inputs.hide_title_bar }}
+          INPUT_HIDE_WINDOW_DECORATIONS: ${{ inputs.hide_window_decorations }}
+          INPUT_FORCE_INTERNAL_NAVIGATION: ${{ inputs.force_internal_navigation }}
+          INPUT_LIQUID_GLASS: ${{ inputs.liquid_glass }}
           INPUT_NEW_WINDOW: ${{ inputs.new_window }}
           INPUT_MULTI_ARCH: ${{ inputs.multi_arch }}
           INPUT_TARGETS: ${{ inputs.targets }}
@@ -219,6 +259,18 @@ jobs:
 
           if ($env:INPUT_HIDE_TITLE_BAR -eq "true") {
             $args += "--hide-title-bar"
+          }
+
+          if ($env:INPUT_HIDE_WINDOW_DECORATIONS -eq "true") {
+            $args += "--hide-window-decorations"
+          }
+
+          if ($env:INPUT_FORCE_INTERNAL_NAVIGATION -eq "true") {
+            $args += "--force-internal-navigation"
+          }
+
+          if ($env:INPUT_LIQUID_GLASS -eq "true") {
+            $args += "--inject", "./injections/dist/bilibili-glass.js"
           }
 
           if ($env:INPUT_NEW_WINDOW -eq "true") {
